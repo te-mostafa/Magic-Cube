@@ -107,7 +107,7 @@ export function filterContour( frame : Mat ) {
     if (!found) return [];
 
     // Sort top-left to bottom-right
-    const ySorted = [...finalCont].sort((a, b) => a.y - b.y);
+    const ySorted = [...finalCont].sort((a, b) => b.y - a.y);
 
     const topRow = ySorted.slice(0, 3).sort((a, b) => a.x - b.x);
     const middleRow = ySorted.slice(3, 6).sort((a, b) => a.x - b.x);

@@ -3,11 +3,10 @@ import { Canvas, PaintStyle, Rect, Skia } from '@shopify/react-native-skia';
 import { Camera, useCameraDevice, useCameraPermission, useSkiaFrameProcessor } from "react-native-vision-camera";
 import { View, Text, StyleSheet, Animated, Pressable, Image } from "react-native";
 import { useResizePlugin } from 'vision-camera-resize-plugin';
-import { useKeepAwake } from '@sayem314/react-native-keep-awake';
 import { useEffect, useRef, useState } from 'react';
 import { BorderTypes, ColorConversionCodes, DataTypes, MorphShapes, ObjectType, OpenCV } from 'react-native-fast-opencv';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRunOnJS, useSharedValue } from 'react-native-worklets-core';
+import { useSharedValue } from 'react-native-worklets-core';
 import { useNavigation } from '@react-navigation/native';
 
 import { filterContour, detectColors, getMeanLAB } from './CV'
@@ -69,8 +68,6 @@ export default function ScanScreen() {
     const [scannedFaces, setScannedFaces] = useState<string[][]>([]); 
 
     const { resize } = useResizePlugin();
-
-    useKeepAwake();
 
     useEffect(() => {
         if (calibrate) {
@@ -166,6 +163,7 @@ export default function ScanScreen() {
         if (contours.length == 9) {
             const colors = detectColors(lab, contours, calibrationShared.value);
             activeFace.value = [...colors];
+            console.log(activeFace);
             centreFace.value = getMeanLAB(lab, contours[4]);
             for (const [i, rect] of contours.entries()) {
                 paint.setColor(Skia.Color(colorList[colors[i]]));
@@ -232,7 +230,7 @@ export default function ScanScreen() {
     function handleScannedFacePress() {
         setScannedFaces([...scannedFaces, Object.values(activeFace.value)]);
 
-        if (scannedFaces.length === 6) {
+        if (scannedFaces.length === 5) {
             navigation.navigate('Cube');
         }
     }
@@ -260,8 +258,8 @@ export default function ScanScreen() {
                 {scannedFaces.map((face, faceIndex) => (
                 face.map((color, j) => {
                     const [baseX, baseY] = gridPositions[faceIndex];
-                    const x = baseX + (RECT_SIZE + GRID_GAP) * (j % 3);
-                    const y = baseY + (RECT_SIZE + GRID_GAP) * Math.floor(j / 3);
+                    const x = baseX + (RECT_SIZE + GRID_GAP) * Math.floor(j / 3);
+                    const y = baseY + (RECT_SIZE + GRID_GAP) * (j % 3);
 
                     return (
                     <Rect
