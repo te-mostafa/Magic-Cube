@@ -1,48 +1,106 @@
-import React, { useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { View, PanResponder } from "react-native";
 import { Canvas, useFrame } from "@react-three/fiber/native";
 import * as THREE from "three";
-import { Instance, Instances, RoundedBoxGeometry } from "@react-three/drei";
+import { RoundedBoxGeometry } from "three-stdlib";
 
-const cubePos = [
-    [-1, -1, -1], [-1, -1, 0], [-1, -1, 1],
-    [-1,  0, -1], [-1,  0, 0], [-1,  0, 1],
-    [-1,  1, -1], [-1,  1, 0], [-1,  1, 1],
-    [ 0, -1, -1], [ 0, -1, 0], [ 0, -1, 1],
-    [ 0,  0, -1], [ 0,  0, 0], [ 0,  0, 1],
-    [ 0,  1, -1], [ 0,  1, 0], [ 0,  1, 1],
-    [ 1, -1, -1], [ 1, -1, 0], [ 1, -1, 1],
-    [ 1,  0, -1], [ 1,  0, 0], [ 1,  0, 1],
-    [ 1,  1, -1], [ 1,  1, 0], [ 1,  1, 1]
-]
+function createFaceAtlas() {
+    const colors = [
+        new THREE.Color("white"),  // +X
+        new THREE.Color("yellow"), // -X
+        new THREE.Color("lightgreen"),  // +Y
+        new THREE.Color("blue"),   // -Y
+        new THREE.Color("red"),    // +Z
+        new THREE.Color("orange"), // -Z
+        new THREE.Color("darkgray") // No Face
+    ];
+  
+    const data = new Uint8Array(7 * 4);
+    colors.forEach((c, i) => {
+        data[i * 4 + 0] = Math.floor(c.r * 255);
+        data[i * 4 + 1] = Math.floor(c.g * 255);
+        data[i * 4 + 2] = Math.floor(c.b * 255);
+        data[i * 4 + 3] = 255 // Fully opaque
+    });
+  
+    const tex = new THREE.DataTexture(data, 7, 1, THREE.RGBAFormat);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.magFilter = THREE.NearestFilter;
+    tex.minFilter = THREE.NearestFilter;
+    tex.needsUpdate = true;
+  
+    return tex;
+}
 
-function Cube({ panRef }) {
-    const meshRef = useRef<THREE.Mesh>(null!);
+function createCubeGeometry() {
+    const box = new RoundedBoxGeometry(1, 1, 1, 3, 0.2);
+    box.computeVertexNormals();
+    
+    const norm = box.attributes.normal;
+
+    const uvs = [];
+    for (let i = 0; i < norm.count; i++) {
+        const n = new THREE.Vector3().fromBufferAttribute(norm, i);
+        
+        let faceIndex = 6;
+
+        if (n.x >=  0.9) faceIndex = 0;
+        if (n.x <= -0.9) faceIndex = 1; 
+        if (n.y >=  0.9) faceIndex = 2;
+        if (n.y <= -0.9) faceIndex = 3; 
+        if (n.z >=  0.9) faceIndex = 4;
+        if (n.z <= -0.9) faceIndex = 5;
+
+        const u = (faceIndex + 0.5) / 7;
+        uvs.push(u, 0.5);
+    }
+
+    box.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    return box;
+}
+
+function Cube({ panRef }: { panRef: React.RefObject<{ x: number; y: number }> }) {
+    const groupRef = useRef<THREE.Group>(null!);
+    const instanceRef = useRef<THREE.InstancedMesh>(null!);
+    
+    const geometry = useMemo(() => createCubeGeometry(), []);
+    const atlas = useMemo(() => createFaceAtlas(), []);
+    const material = useMemo(() => new THREE.MeshStandardMaterial({map: atlas}), []);
+
+    useEffect(() => {
+        if (!instanceRef.current) return;
+
+        let index = 0;
+        for (let x = -1; x <= 1; x++)
+            for (let y = -1; y <= 1; y++)
+                for (let z = -1; z <= 1; z++) {
+                    const m = new THREE.Matrix4().makeTranslation(x, y, z);
+                    instanceRef.current.setMatrixAt(index++, m);
+                }
+        
+        instanceRef.current.instanceMatrix.needsUpdate = true;
+    }, [instanceRef]);
 
     useFrame(() => {
-        if (!meshRef.current) return;
+        if (!groupRef.current) return;
 
-        meshRef.current.rotation.y += panRef.current.x * 0.01;
-        meshRef.current.rotation.x += panRef.current.y * 0.01;
+        groupRef.current.rotation.y += panRef.current.x * 0.01;
+        groupRef.current.rotation.x += panRef.current.y * 0.01;
       
         panRef.current.x = 0;
         panRef.current.y = 0;
     });
 
     return (
-        <mesh ref={meshRef}>
-            <Instances>
-                <RoundedBoxGeometry args={[1, 1, 1]} radius={0.2} smoothness={4} />
-                <meshStandardMaterial color={"grey"} />
-                {cubePos.map((pos, i) => (
-                    <Instance key={i} position={pos} />
-                ))}
-            </Instances>
-        </mesh>
+        <group ref={groupRef}>
+            <instancedMesh ref={instanceRef} args={[geometry, material, 27]} />
+        </group>
     );
 }
 
-export default function CubeScreen() {
+export default function CubeScreen({ route }) {
+    const faces = route.params.faces;
+
     const panRef = useRef({ x: 0, y: 0 });
     const prevRef = useRef({ x: 0, y: 0 });
     

@@ -163,7 +163,6 @@ export default function ScanScreen() {
         if (contours.length == 9) {
             const colors = detectColors(lab, contours, calibrationShared.value);
             activeFace.value = [...colors];
-            console.log(activeFace);
             centreFace.value = getMeanLAB(lab, contours[4]);
             for (const [i, rect] of contours.entries()) {
                 paint.setColor(Skia.Color(colorList[colors[i]]));
@@ -228,11 +227,13 @@ export default function ScanScreen() {
     }
 
     function handleScannedFacePress() {
-        setScannedFaces([...scannedFaces, Object.values(activeFace.value)]);
-
-        if (scannedFaces.length === 5) {
-            navigation.navigate('Cube');
-        }
+        setScannedFaces(prevFaces => {
+            const newFaces = [...prevFaces, Object.values(activeFace.value)];
+            if (newFaces.length === 6) {
+                navigation.navigate('Cube', { faces: newFaces });
+            }
+            return newFaces;
+        });
     }
     
     if (!hasPermission) {
