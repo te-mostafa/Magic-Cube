@@ -3,6 +3,7 @@ import { View, PanResponder } from "react-native";
 import { Canvas, useFrame } from "@react-three/fiber/native";
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three-stdlib";
+import { Instance, Instances } from "@react-three/drei";
 
 function createFaceAtlas() {
     const colors = [
@@ -12,7 +13,7 @@ function createFaceAtlas() {
         new THREE.Color("blue"),   // -Y
         new THREE.Color("red"),    // +Z
         new THREE.Color("orange"), // -Z
-        new THREE.Color("darkgray") // No Face
+        new THREE.Color("black") // No Face
     ];
   
     const data = new Uint8Array(7 * 4);
@@ -32,8 +33,31 @@ function createFaceAtlas() {
     return tex;
 }
 
-function createCubeGeometry() {
-    const box = new RoundedBoxGeometry(1, 1, 1, 3, 0.2);
+const colorSides = [
+    [0, 1, 'darkorange'],
+    [0, -1, 'red'],
+    [1, 1, 'white'],
+    [1, -1, 'yellow'],
+    [2, 1, 'green'],
+    [2, -1, 'blue']
+]
+
+function Cubelet({ position, geometry }) {
+    return (
+        <mesh position={position} geometry={geometry}>
+            {[...Array(6).keys()].map((i) => (
+                <meshStandardMaterial
+                    key={i}
+                    attach={`material-${i}`}
+                    color={position[colorSides[i][0]] === colorSides[i][1] ? colorSides[i][2] : `black`}
+                />
+            ))}
+        </mesh>
+    )
+}
+
+function createCubeGeometry({position}) {
+    const box = new RoundedBoxGeometry(1, 1, 1, 5, 0.2);
     box.computeVertexNormals();
     
     const norm = box.attributes.normal;
@@ -44,12 +68,12 @@ function createCubeGeometry() {
         
         let faceIndex = 6;
 
-        if (n.x >=  0.9) faceIndex = 0;
-        if (n.x <= -0.9) faceIndex = 1; 
-        if (n.y >=  0.9) faceIndex = 2;
-        if (n.y <= -0.9) faceIndex = 3; 
-        if (n.z >=  0.9) faceIndex = 4;
-        if (n.z <= -0.9) faceIndex = 5;
+        if (n.x >=  0.91) faceIndex = 0;
+        if (n.x <= -0.91) faceIndex = 1; 
+        if (n.y >=  0.91) faceIndex = 2;
+        if (n.y <= -0.91) faceIndex = 3; 
+        if (n.z >=  0.91) faceIndex = 4;
+        if (n.z <= -0.91) faceIndex = 5;
 
         const u = (faceIndex + 0.5) / 7;
         uvs.push(u, 0.5);
@@ -61,39 +85,41 @@ function createCubeGeometry() {
 
 function Cube({ panRef }: { panRef: React.RefObject<{ x: number; y: number }> }) {
     const groupRef = useRef<THREE.Group>(null!);
-    const instanceRef = useRef<THREE.InstancedMesh>(null!);
     
-    const geometry = useMemo(() => createCubeGeometry(), []);
-    const atlas = useMemo(() => createFaceAtlas(), []);
-    const material = useMemo(() => new THREE.MeshStandardMaterial({map: atlas}), []);
-
-    useEffect(() => {
-        if (!instanceRef.current) return;
-
-        let index = 0;
-        for (let x = -1; x <= 1; x++)
-            for (let y = -1; y <= 1; y++)
-                for (let z = -1; z <= 1; z++) {
-                    const m = new THREE.Matrix4().makeTranslation(x, y, z);
-                    instanceRef.current.setMatrixAt(index++, m);
-                }
-        
-        instanceRef.current.instanceMatrix.needsUpdate = true;
-    }, [instanceRef]);
+    const roundedBoxGeometry = useMemo(() => {
+        return new RoundedBoxGeometry(1, 1, 1, 3, 0.1)
+    }, [])
 
     useFrame(() => {
         if (!groupRef.current) return;
 
+        const up = new THREE.Vector3(0, 1, 0);
+        up.applyQuaternion(groupRef.current.quaternion);
+
+        // Prevent upside down by limiting rotation.x
+
+        // Compute proposed new rotation.x
+        let newRotX = groupRef.current.rotation.x + panRef.current.y * 0.01;
+
+        const maxAngle = Math.PI / 2 * 0.99; // slightly less than 90 deg to avoid gimbal issues
+        newRotX = THREE.MathUtils.clamp(newRotX, -maxAngle, maxAngle);
+
         groupRef.current.rotation.y += panRef.current.x * 0.01;
-        groupRef.current.rotation.x += panRef.current.y * 0.01;
-      
+        groupRef.current.rotation.x = newRotX;
+
         panRef.current.x = 0;
         panRef.current.y = 0;
     });
 
     return (
         <group ref={groupRef}>
-            <instancedMesh ref={instanceRef} args={[geometry, material, 27]} />
+            {[...Array(3).keys()].map((x) =>
+                [...Array(3).keys()].map((y) =>
+                    [...Array(3).keys()].map((z) => (
+                        <Cubelet key={x + y * 3 + z * 9} position={[x - 1, y - 1, z - 1]} geometry={roundedBoxGeometry} />
+                        ))
+                    )
+                )}
         </group>
     );
 }
