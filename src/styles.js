@@ -1,9 +1,12 @@
 
-import { StyleSheet } from "react-native";
+import { StyleSheet } from 'react-native';
+
+const buttonColor = '#eb3b2f';
+const buttonColorPressed = '#b32b22';
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1
+        flex: 1,
     },
     title: {
         margin: 20,
@@ -18,24 +21,24 @@ const styles = StyleSheet.create({
         bottom: 50,
         alignSelf: 'center',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
     },
     text: {
         textAlign: 'center',
         paddingBottom: 10,
     },
     overlay: {
-        position: "absolute",
+        position: 'absolute',
         top: 50,
         left: 0,
         right: 0,
-        alignItems: "center",
+        alignItems: 'center',
     },
     overlayText: {
-        color: "white",
+        color: 'white',
         fontSize: 22,
-        fontWeight: "bold",
-        backgroundColor: "rgba(0,0,0,0.6)",
+        fontWeight: 'bold',
+        backgroundColor: 'rgba(0,0,0,0.6)',
         padding: 10,
         borderRadius: 10,
     },
@@ -58,7 +61,7 @@ const styles = StyleSheet.create({
         alignItems: 'stretch',
         gap: 50,
         padding: 10,
-    }
+    },
 });
 
 export default styles;

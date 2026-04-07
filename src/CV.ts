@@ -1,5 +1,5 @@
-import { ContourApproximationModes, DataTypes, Mat, ObjectType, OpenCV, RetrievalModes } from "react-native-fast-opencv";
-import { SharedValue } from "react-native-reanimated";
+import { ContourApproximationModes, DataTypes, Mat, ObjectType, OpenCV, RetrievalModes } from 'react-native-fast-opencv';
+import { SharedValue } from 'react-native-reanimated';
 
 export function getMeanLAB( lab: Mat, rect: any) {
     'worklet';
@@ -8,28 +8,28 @@ export function getMeanLAB( lab: Mat, rect: any) {
     OpenCV.invoke('crop', lab, roi, OpenCV.createObject(ObjectType.Rect, rect.x, rect.y, rect.width, rect.height));
     const mean = OpenCV.invoke('mean', roi);
     const meanJS = OpenCV.toJSValue(mean);
-    const {a, b, c} = meanJS
+    const {a, b, c} = meanJS;
 
     return ({a, b, c});
 }
 
-function deltaE76(p, q, wL=1.0) {
+function deltaE76(p, q, wL = 1.0) {
     'worklet';
 
-    const dL = wL*(p.a - q.a);
+    const dL = wL * (p.a - q.a);
     const da = p.b - q.b;
     const db = p.c - q.c;
-    return Math.sqrt(dL*dL + da*da + db*db);
+    return Math.sqrt(dL * dL + da * da + db * db);
 }
 
 export function filterContour( frame : Mat ) {
     'worklet';
 
     const contours = OpenCV.createObject(ObjectType.MatVector);
-    OpenCV.invoke('findContours', 
-                    frame, 
-                    contours, 
-                    RetrievalModes.RETR_TREE, 
+    OpenCV.invoke('findContours',
+                    frame,
+                    contours,
+                    RetrievalModes.RETR_TREE,
                     ContourApproximationModes.CHAIN_APPROX_SIMPLE);
     const contoursJS = OpenCV.toJSValue(contours);
 
@@ -43,24 +43,24 @@ export function filterContour( frame : Mat ) {
         const approx = OpenCV.createObject(ObjectType.PointVector);
         OpenCV.invoke('approxPolyDP', cont, approx, 0.1 * perimeter, true);
         const approxJS = OpenCV.toJSValue(approx);
-    
+
         if (approxJS.array.length === 4) {
           const { value: area } = OpenCV.invoke('contourArea', cont, false);
-    
+
           const rect = OpenCV.invoke('boundingRect', approx);
           const { x, y, width: w, height: h } = OpenCV.toJSValue(rect);
-    
+
           const ratio = w / (h === 0 ? 1 : h);
-    
+
           if (ratio >= 0.8 && ratio <= 1.2 && w <= 60 && area / (w * h) > 0.4) {
             finalCont.push({ x, y, width: w, height: h });
           }
         }
     }
 
-    if (finalCont.length < 9) return [];
+    if (finalCont.length < 9) {return [];}
 
-    let found = false
+    let found = false;
     const contourNeighbors: Record<number, Array<{ x:number, y:number, width:number, height:number }>> = {};
 
     // Find contour with nine neighbours
@@ -104,7 +104,7 @@ export function filterContour( frame : Mat ) {
         }
     }
 
-    if (!found) return [];
+    if (!found) {return [];}
 
     // Sort top-left to bottom-right
     const ySorted = [...finalCont].sort((a, b) => b.y - a.y);
@@ -124,15 +124,15 @@ export function detectColors(lab : Mat, rects : any[], calibrationShared: Shared
     const colors = [];
     const calib = JSON.parse(JSON.stringify(calibrationShared));
     let roi = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_8U);
-    
+
     for (const rect of rects) {
         OpenCV.invoke('crop', lab, roi, OpenCV.createObject(ObjectType.Rect, rect.x, rect.y, rect.width, rect.height));
         const mean = OpenCV.invoke('mean', roi);
-        const meanJS = OpenCV.toJSValue(mean)
+        const meanJS = OpenCV.toJSValue(mean);
         let bestColor = null, bestD = Infinity;
 
         for (const [color, labMean] of Object.entries(calib)) {
-            if (labMean == null) continue;
+            if (labMean == null) {continue;}
 
             const d = deltaE76(meanJS, labMean, 0.6);
             if (d < bestD) {
@@ -141,7 +141,7 @@ export function detectColors(lab : Mat, rects : any[], calibrationShared: Shared
             }
         }
 
-        if (bestColor == null) bestColor = 'white';
+        if (bestColor == null) {bestColor = 'white';}
 
         colors.push(bestColor);
     }

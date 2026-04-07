@@ -1,46 +1,46 @@
-import React, { useEffect, useMemo, useRef } from "react";
-import { View, PanResponder } from "react-native";
-import { Canvas, useFrame } from "@react-three/fiber/native";
-import * as THREE from "three";
-import { RoundedBoxGeometry } from "three-stdlib";
-import { Instance, Instances } from "@react-three/drei";
+import React, { useEffect, useMemo, useRef } from 'react';
+import { View, PanResponder } from 'react-native';
+import { Canvas, useFrame } from '@react-three/fiber/native';
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three-stdlib';
+import { Instance, Instances } from '@react-three/drei';
 
-function createFaceAtlas() {
-    const colors = [
-        new THREE.Color("white"),  // +X
-        new THREE.Color("yellow"), // -X
-        new THREE.Color("lightgreen"),  // +Y
-        new THREE.Color("blue"),   // -Y
-        new THREE.Color("red"),    // +Z
-        new THREE.Color("orange"), // -Z
-        new THREE.Color("black") // No Face
-    ];
-  
-    const data = new Uint8Array(7 * 4);
-    colors.forEach((c, i) => {
-        data[i * 4 + 0] = Math.floor(c.r * 255);
-        data[i * 4 + 1] = Math.floor(c.g * 255);
-        data[i * 4 + 2] = Math.floor(c.b * 255);
-        data[i * 4 + 3] = 255 // Fully opaque
-    });
-  
-    const tex = new THREE.DataTexture(data, 7, 1, THREE.RGBAFormat);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.magFilter = THREE.NearestFilter;
-    tex.minFilter = THREE.NearestFilter;
-    tex.needsUpdate = true;
-  
-    return tex;
-}
+// function createFaceAtlas() {
+//     const colors = [
+//         new THREE.Color("white"),  // +X
+//         new THREE.Color("yellow"), // -X
+//         new THREE.Color("lightgreen"),  // +Y
+//         new THREE.Color("blue"),   // -Y
+//         new THREE.Color("red"),    // +Z
+//         new THREE.Color("orange"), // -Z
+//         new THREE.Color("black") // No Face
+//     ];
+
+//     const data = new Uint8Array(7 * 4);
+//     colors.forEach((c, i) => {
+//         data[i * 4 + 0] = Math.floor(c.r * 255);
+//         data[i * 4 + 1] = Math.floor(c.g * 255);
+//         data[i * 4 + 2] = Math.floor(c.b * 255);
+//         data[i * 4 + 3] = 255 // Fully opaque
+//     });
+
+//     const tex = new THREE.DataTexture(data, 7, 1, THREE.RGBAFormat);
+//     tex.colorSpace = THREE.SRGBColorSpace;
+//     tex.magFilter = THREE.NearestFilter;
+//     tex.minFilter = THREE.NearestFilter;
+//     tex.needsUpdate = true;
+
+//     return tex;
+// }
 
 const colorSides = [
-    [0, 1, 'darkorange'],
+    [0,  1, 'darkorange'],
     [0, -1, 'red'],
-    [1, 1, 'white'],
+    [1,  1, 'white'],
     [1, -1, 'yellow'],
-    [2, 1, 'green'],
-    [2, -1, 'blue']
-]
+    [2,  1, 'green'],
+    [2, -1, 'blue'],
+];
 
 function Cubelet({ position, geometry }) {
     return (
@@ -49,49 +49,49 @@ function Cubelet({ position, geometry }) {
                 <meshStandardMaterial
                     key={i}
                     attach={`material-${i}`}
-                    color={position[colorSides[i][0]] === colorSides[i][1] ? colorSides[i][2] : `black`}
+                    color={position[colorSides[i][0]] === colorSides[i][1] ? colorSides[i][2] : 'black'}
                 />
             ))}
         </mesh>
-    )
+    );
 }
 
-function createCubeGeometry({position}) {
-    const box = new RoundedBoxGeometry(1, 1, 1, 5, 0.2);
-    box.computeVertexNormals();
-    
-    const norm = box.attributes.normal;
+// function createCubeGeometry({position}) {
+//     const box = new RoundedBoxGeometry(1, 1, 1, 5, 0.2);
+//     box.computeVertexNormals();
 
-    const uvs = [];
-    for (let i = 0; i < norm.count; i++) {
-        const n = new THREE.Vector3().fromBufferAttribute(norm, i);
-        
-        let faceIndex = 6;
+//     const norm = box.attributes.normal;
 
-        if (n.x >=  0.91) faceIndex = 0;
-        if (n.x <= -0.91) faceIndex = 1; 
-        if (n.y >=  0.91) faceIndex = 2;
-        if (n.y <= -0.91) faceIndex = 3; 
-        if (n.z >=  0.91) faceIndex = 4;
-        if (n.z <= -0.91) faceIndex = 5;
+//     const uvs = [];
+//     for (let i = 0; i < norm.count; i++) {
+//         const n = new THREE.Vector3().fromBufferAttribute(norm, i);
 
-        const u = (faceIndex + 0.5) / 7;
-        uvs.push(u, 0.5);
-    }
+//         let faceIndex = 6;
 
-    box.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-    return box;
-}
+//         if (n.x >=  0.91) faceIndex = 0;
+//         if (n.x <= -0.91) faceIndex = 1;
+//         if (n.y >=  0.91) faceIndex = 2;
+//         if (n.y <= -0.91) faceIndex = 3;
+//         if (n.z >=  0.91) faceIndex = 4;
+//         if (n.z <= -0.91) faceIndex = 5;
+
+//         const u = (faceIndex + 0.5) / 7;
+//         uvs.push(u, 0.5);
+//     }
+
+//     box.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+//     return box;
+// }
 
 function Cube({ panRef }: { panRef: React.RefObject<{ x: number; y: number }> }) {
     const groupRef = useRef<THREE.Group>(null!);
-    
+
     const roundedBoxGeometry = useMemo(() => {
-        return new RoundedBoxGeometry(1, 1, 1, 3, 0.1)
-    }, [])
+        return new RoundedBoxGeometry(1, 1, 1, 3, 0.1);
+    }, []);
 
     useFrame(() => {
-        if (!groupRef.current) return;
+        if (!groupRef.current) {return;}
 
         const up = new THREE.Vector3(0, 1, 0);
         up.applyQuaternion(groupRef.current.quaternion);
@@ -112,7 +112,7 @@ function Cube({ panRef }: { panRef: React.RefObject<{ x: number; y: number }> })
     });
 
     return (
-        <group ref={groupRef}>
+        <group ref={groupRef} rotation={[Math.PI / 4, Math.PI / 4, 0]}>
             {[...Array(3).keys()].map((x) =>
                 [...Array(3).keys()].map((y) =>
                     [...Array(3).keys()].map((z) => (
@@ -126,20 +126,21 @@ function Cube({ panRef }: { panRef: React.RefObject<{ x: number; y: number }> })
 
 export default function CubeScreen({ route }) {
     const faces = route.params.faces;
+    const Solver = require('cubejs');
 
     const panRef = useRef({ x: 0, y: 0 });
     const prevRef = useRef({ x: 0, y: 0 });
-    
+
     const panResponder = useRef(
         PanResponder.create({
             onMoveShouldSetPanResponder: () => true,
             onPanResponderMove: (_, gestureState) => {
             const deltaX = gestureState.dx - prevRef.current.x;
             const deltaY = gestureState.dy - prevRef.current.y;
-        
+
             panRef.current.x = deltaX;
             panRef.current.y = deltaY;
-        
+
             prevRef.current.x = gestureState.dx;
             prevRef.current.y = gestureState.dy;
             },
@@ -152,7 +153,7 @@ export default function CubeScreen({ route }) {
 
     return (
         <View style={{ flex: 1 }} {...panResponder.panHandlers}>
-        <Canvas camera={{ position: [0, 0, 8] }}>
+        <Canvas camera={{ position: [0, 0, 8]}}>
             <ambientLight />
             <directionalLight position={[5, 5, 5]} />
             <Cube panRef={panRef} />

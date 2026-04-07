@@ -13,18 +13,18 @@ import CubeScreen from './Cube';
 const RootStack = createNativeStackNavigator({
   screens: {
     Home: {
-      screen: HomeScreen
+      screen: HomeScreen,
     },
     Scan: {
-      screen: ScanScreen
+      screen: ScanScreen,
     },
     Cube: {
-      screen: CubeScreen
-    }
-  }
-})
+      screen: CubeScreen,
+    },
+  },
+});
 
-const Navigation = createStaticNavigation(RootStack)
+const Navigation = createStaticNavigation(RootStack);
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';

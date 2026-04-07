@@ -11,7 +11,7 @@ type PROPS = ModalProps & {
 export default function Popup({isOpen, message, buttons, onClose}: PROPS) {
     return(
     <Modal
-        animationType='fade'
+        animationType="fade"
         visible={isOpen}
         transparent={true}
         onRequestClose={() => onClose()}
@@ -32,10 +32,10 @@ export default function Popup({isOpen, message, buttons, onClose}: PROPS) {
                             <Text style={{fontWeight:'bold', color:'#629af5'}}>{btn.label}</Text>
                         </Pressable>
                     ))}
-                    
+
                 </View>
             </View>
         </View>
     </Modal>
-    )
+    );
 }
