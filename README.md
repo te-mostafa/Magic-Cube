@@ -1,9 +1,27 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Magic Cube
 
-# Getting Started
+A mobile app for scanning and solving a Rubik's cube
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+![Screen recording](res/readme/scanning.webm)
+![Cube screenshot](res/readme/cube_screenshot.png)
 
+Built with:
+- React Native
+- OpenCV
+- Three.js
+
+## Instructions
+Start by following the guide to calibrate your Rubik's cube for accurate colour detection.
+
+![Calibrate](res/readme/calibration_screenshot.png)
+
+Next, scan each face of the cube. Scan the first four faces, rotating the cube right, then scan the faces above and below.
+
+On the cube screen, press the arrows to step through the solution one move at a time.
+
+## Build Instructions
+
+Follow the instructions for [Setting Up Your Environment](https://reactnative.dev/docs/set-up-your-environment)
 ## Step 1: Start Metro
 
 First, you will need to run **Metro**, the JavaScript build tool for React Native.
