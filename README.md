@@ -2,7 +2,8 @@
 
 A mobile app for scanning and solving a Rubik's cube
 
-![Screen recording](res/readme/scanning.webm)
+![Screen recording](res/readme/scanning.gif)
+
 ![Cube screenshot](res/readme/cube_screenshot.png)
 
 Built with:
